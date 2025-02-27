@@ -28,11 +28,10 @@ t }
 t </script></head>
 i pg_header.inc
 t <h2 align="center"><br>AD Converter Input</h2>
-t <p><font size="2">This page allows you to monitor AD input value in numeric
-t  and graphics form. Periodic screen update is based on <b>xml</b> technology.
-t  This results in smooth flicker-free screen update.<br><br>
-t  Turn potentiometer on an evaluation board clockwise or counterclockwise
-t  and observe the change of AD value on the screen.</font></p>
+t <p><font size="3">Esta página permite al usuario ver por pantalla la variación
+t de los dos potenciómetros de la <b>App Board</b> en tiempo real. Al clickar en
+t la opción <b>Periodic</b> podrá observarse la variación mediante una barra. <br><br>
+t La configuración de pines es PC3 (POT1) y PC0 (POT2) mediante ADC.</font></p>
 t <form action="ad.cgi" method="post" name="ad">
 t <input type="hidden" value="ad" name="pg">
 t <table border=0 width=99%><font size="3">

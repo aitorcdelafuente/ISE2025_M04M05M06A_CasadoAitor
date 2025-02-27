@@ -102,6 +102,8 @@ static __NO_RETURN void Display (void *arg) {
 
   (void)arg;
   
+//  LEDrun = false;
+  
   while(1) {
 
     flagLCD = osThreadFlagsWait (0x50, osFlagsWaitAll, osWaitForever);
@@ -110,7 +112,7 @@ static __NO_RETURN void Display (void *arg) {
       escrituraLCD_V2(1, lcd_text[0]);
       escrituraLCD_V2(2, lcd_text[1]);
     }
-    osDelay(100);
+    //osDelay(100);
     LCD_Update ();
   }
 }

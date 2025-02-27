@@ -10,11 +10,14 @@ t  document.form1.submit();
 t }
 t </script></head>
 i pg_header.inc
-t <h2 align=center><br>Control LEDs on the board</h2>
-t <p><font size="2">This page shows you how to use the following http form <b>input</b> objects:
-t  <b>checkbox</b>, <b>select</b> and <b>button</b>. It uses also a simple <b>Java Script</b>
-t  function to check/uncheck all checkboxes and submit the data.<br><br>
-t  This Form uses a <b>POST</b> method to send data to a Web server.</font></p>
+t <h2 align=center><br>Control LEDs: F429ZI & MBED AppBoard</h2>
+t <p><font size="3">Mediante esta página web es posible encender/apagar los leds
+t  de la tarjeta núcleo <b>F429ZI</b> como de la <b>MBED App Board</b>. Tiene dos
+t  modos de funcionamiento: <b>Running Lights</b> y <b>Browser</b>. En el primero
+t  los leds realizan una secuencia de ON/OFF dada en la función <b>BlinkLed</b>.
+t  El segundo modo permite encender/apagar los leds seleccionados en las checkboxes.<br><br>
+t  Los pines de conexión de la <b>F429ZI</b> son: LD1 (PB0), LD2 (PB7) y LD3 (PB11)
+t  Los pines de conexión de la <b>App Board</b> son: R (PD11), G (PD12) y B (PD13).</font></p>
 t <form action=leds.cgi method=post name=form1>
 t <input type=hidden value="led" name=pg>
 t <table border=0 width=99%><font size="3">
