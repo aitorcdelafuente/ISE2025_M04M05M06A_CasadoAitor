@@ -6,8 +6,9 @@
 #include "rtc.h"
 
 RTC_HandleTypeDef rtchandler;
-RTC_TimeTypeDef rtcTimeConfig;
-RTC_DateTypeDef rtcDateConfig;
+RTC_TimeTypeDef rtcTimeConfig = {0};
+RTC_DateTypeDef rtcDateConfig = {0};
+RTC_AlarmTypeDef alarmConfig  = {0};
 
 uint8_t errorDia = 0;
 uint8_t errorHora = 0;
@@ -23,6 +24,8 @@ uint8_t mes = RTC_MONTH_MARCH;
 uint8_t anio = 0x25;
 uint8_t weekDay = RTC_WEEKDAY_MONDAY;
 
+volatile bool alarmCheck = false;
+
 /**
   * @brief  Inicialización del RTC
   * @param  None
@@ -30,12 +33,12 @@ uint8_t weekDay = RTC_WEEKDAY_MONDAY;
   */
 void RTC_Init (void){
   
-  /* LSE Initialization */
+  /*##-1- LSE Initialization */
   init_LSE_Clock ();
   
   __HAL_RCC_RTC_ENABLE ();
   
-  /*##-1- Configure the RTC peripheral #######################################*/
+  /*##-2- Configure the RTC peripheral #######################################*/
   /* Configure RTC prescaler and RTC data registers */
   rtchandler.Instance = RTC; //Asigna la instancia del RTC a la estructura rtchandler, del tipo RTC_HandleTypeDef
   rtchandler.Init.HourFormat = RTC_HOURFORMAT_24; //Configura el modo 24 horas
@@ -58,6 +61,7 @@ void RTC_Init (void){
     /* Configure RTC Calendar */
     RTC_Time_Config();
     RTC_Date_Config();
+    RTC_SetAlarm ();
   }
   else
   {
@@ -163,4 +167,22 @@ static void init_LSE_Clock (void){
     errorPeriferico += 1;
     while (1);  // Error en la configuración
   }
+}
+
+void RTC_SetAlarm (void){
+  
+  HAL_RTC_GetTime(&rtchandler, &rtcTimeConfig, RTC_FORMAT_BIN);
+  alarmConfig.AlarmTime.Hours = rtcTimeConfig.Hours;
+  alarmConfig.AlarmTime.Minutes = rtcTimeConfig.Minutes;
+  alarmConfig.AlarmTime.Seconds = 0;
+  alarmConfig.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  alarmConfig.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  alarmConfig.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY | RTC_ALARMMASK_HOURS | RTC_ALARMMASK_MINUTES; //En la máscara se pone lo que NO quiero tener en cuenta
+  alarmConfig.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
+  alarmConfig.AlarmDateWeekDay = 0x1;
+  alarmConfig.Alarm = RTC_ALARM_A;
+  
+  HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn); //Habilita ambas alarmas
+  HAL_RTC_SetAlarm_IT(&rtchandler, &alarmConfig, RTC_FORMAT_BIN);
+  //CLEAR_BIT(rtchandler.Instance->CR, RTC_CR_ALRAIE);
 }

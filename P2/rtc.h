@@ -12,6 +12,7 @@
 #include <time.h>
 #include "stdio.h"
 #include "string.h"
+#include "stdbool.h"
 
 #ifdef _RTE_
 #include "RTE_Components.h"             // Component selection
@@ -25,11 +26,16 @@
 #define RTC_ASYNCH_PREDIV  0x7F   /* LSE as RTC clock */ //(Valor = 127)
 #define RTC_SYNCH_PREDIV   0x00FF /* LSE as RTC clock */ //(Valor = 255)
 
+/* Exported variables --------------------------------------------------------*/
+extern RTC_HandleTypeDef rtchandler;
+extern volatile bool alarmCheck;
+
 /* Exported functions --------------------------------------------------------*/
 void RTC_Init (void);
 void RTC_Time_Config (void);
 void RTC_Date_Config (void);
 void RTC_Show(uint8_t *showtime, uint8_t *showdate);
 static void init_LSE_Clock (void);
+void RTC_SetAlarm (void);
 
 #endif /* __RTC_H */

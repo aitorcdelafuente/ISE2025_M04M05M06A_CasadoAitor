@@ -43,6 +43,7 @@ extern osThreadId_t TID_Display;
 extern osThreadId_t TID_Led;
 extern osThreadId_t TID_RTC;
 
+
 bool LEDrun;
 char lcd_text[2][20+1] = { "LCD line 1",
                            "LCD line 2" };
@@ -55,11 +56,16 @@ uint8_t aShowDate[10] = {0};
 osThreadId_t TID_Display;
 osThreadId_t TID_Led;
 osThreadId_t TID_RTC;
+osThreadId_t TID_Alarm;
+
+/* Timers IDs*/
+uint8_t cincoSeg = 0;
 
 /* Thread declarations */
 static void BlinkLed (void *arg);
 static void Display  (void *arg);
-static void RealTimeClock (void *arg);  
+static void RealTimeClock (void *arg);
+static void AlarmHandler (void *arg);
 
 __NO_RETURN void app_main (void *arg);
 
@@ -133,7 +139,7 @@ static __NO_RETURN void BlinkLed (void *arg) {
                                 
   (void)arg;
 
-  LEDrun = true;
+  LEDrun = false; //CAMBIAR
   while(1) {
     /* Every 100 ms */
     if (LEDrun == true) {
@@ -159,13 +165,32 @@ static __NO_RETURN void RealTimeClock (void *arg){
     memcpy(lcd_text[1], aShowDate, sizeof(aShowDate));
     lcd_text[1][sizeof(aShowDate)] = '\0';
     
-    osThreadFlagsSet (TID_Display, 0x50);
+    //Envía al hilo del LCD para escribir
+    osThreadFlagsSet (TID_Display, 0x50); 
+    
   }
 }
 
-/*----------------------------------------------------------------------------
-  Main Thread 'main': Run Network
- *---------------------------------------------------------------------------*/
+static __NO_RETURN void AlarmHandler (void *arg){
+  
+  (void)arg;
+  
+  while(1){
+    
+    if(alarmCheck == true){
+      alarmCheck =! alarmCheck;
+      
+      for(cincoSeg = 0; cincoSeg < 5; cincoSeg++){
+        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+        osDelay(1000);
+      }
+    }
+  }
+}
+
+/**---------------------------------------------------------------------------*
+  * Main Thread 'main': Run Network                                           *
+  *---------------------------------------------------------------------------**/
 __NO_RETURN void app_main (void *arg) {
   (void)arg;
 
@@ -185,6 +210,7 @@ __NO_RETURN void app_main (void *arg) {
   TID_Led     = osThreadNew (BlinkLed, NULL, NULL);
   TID_Display = osThreadNew (Display,  NULL, NULL);
   TID_RTC     = osThreadNew (RealTimeClock, NULL, NULL);
-
+  TID_Alarm   = osThreadNew (AlarmHandler, NULL, NULL);
+  
   osThreadExit();
 }

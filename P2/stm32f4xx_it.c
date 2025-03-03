@@ -42,6 +42,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_it.h"
+#include "rtc.h"
 
 #ifdef _RTE_
 #include "RTE_Components.h"             /* Component selection */
@@ -62,7 +63,13 @@
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
+void RTC_Alarm_IRQHandler (void){
+  HAL_RTC_AlarmIRQHandler(&rtchandler);
+}
 
+void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc){
+  alarmCheck = true;
+}
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */
 /******************************************************************************/
