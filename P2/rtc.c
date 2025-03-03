@@ -9,12 +9,32 @@ RTC_HandleTypeDef rtchandler;
 RTC_TimeTypeDef rtcTimeConfig;
 RTC_DateTypeDef rtcDateConfig;
 
+uint8_t errorDia = 0;
+uint8_t errorHora = 0;
+uint8_t errorLSE = 0;
+uint8_t errorPeriferico = 0;
+
+uint8_t hora = 0x14;
+uint8_t min = 0x24;
+uint8_t seg = 0x32;
+
+uint8_t dia = 0x03;
+uint8_t mes = RTC_MONTH_MARCH;
+uint8_t anio = 0x25;
+uint8_t weekDay = RTC_WEEKDAY_MONDAY;
+
 /**
   * @brief  Inicialización del RTC
   * @param  None
   * @retval None
   */
 void RTC_Init (void){
+  
+  /* LSE Initialization */
+  init_LSE_Clock ();
+  
+  __HAL_RCC_RTC_ENABLE ();
+  
   /*##-1- Configure the RTC peripheral #######################################*/
   /* Configure RTC prescaler and RTC data registers */
   rtchandler.Instance = RTC; //Asigna la instancia del RTC a la estructura rtchandler, del tipo RTC_HandleTypeDef
@@ -29,6 +49,20 @@ void RTC_Init (void){
   if (HAL_RTC_Init(&rtchandler) != HAL_OK)
   {
     /* Initialization Error */
+  }
+  
+    /*##-2- Check if Data stored in BackUp register1: No Need to reconfigure RTC#*/
+  /* Read the Back Up Register 1 Data */
+  if (HAL_RTCEx_BKUPRead(&rtchandler, RTC_BKP_DR1) != 0x32F2)
+  {
+    /* Configure RTC Calendar */
+    RTC_Time_Config();
+    RTC_Date_Config();
+  }
+  else
+  {
+    /* Clear source Reset Flag */
+    __HAL_RCC_CLEAR_RESET_FLAGS();
   }
 }
 
@@ -48,11 +82,11 @@ void RTC_Init (void){
   * @param  Hora, minutos, segundos, dia, mes y años a configurar
   * @retval None
   */
-void RTC_Time_Config (uint8_t hor, uint8_t min, uint8_t seg){
+void RTC_Time_Config (void){
   
   /*##-1- Configure the Time #################################################*/
   /* Set Time: 20:24:58 */
-  rtcTimeConfig.Hours = hor;
+  rtcTimeConfig.Hours = hora;
   rtcTimeConfig.Minutes = min;
   rtcTimeConfig.Seconds = seg;
   rtcTimeConfig.TimeFormat = RTC_HOURFORMAT_24;
@@ -62,11 +96,11 @@ void RTC_Time_Config (uint8_t hor, uint8_t min, uint8_t seg){
   if (HAL_RTC_SetTime(&rtchandler, &rtcTimeConfig, RTC_FORMAT_BCD) != HAL_OK)
   {
     /* Initialization Error */
-   // Error_Handler();
+    errorHora += 1;
   }
   
   //Guarda en el registro back-up 1 el dato en hexadecimal. Dicho valor puede ir del 0 al 19
-  HAL_RTCEx_BKUPWrite(&rtchandler, RTC_BKP_DR1, 0x32F2); 
+//  HAL_RTCEx_BKUPWrite(&rtchandler, RTC_BKP_DR1, 0x32F2); 
 }
 
 /**
@@ -74,18 +108,20 @@ void RTC_Time_Config (uint8_t hor, uint8_t min, uint8_t seg){
   * @param  Dia, Mes, Año, dia, mes y años a configurar
   * @retval None
   */
-void RTC_Date_Config (uint8_t dia, uint8_t mes, uint8_t anio){
+void RTC_Date_Config (void){
   
   /*##-2- Configure the Date #################################################*/
   /* Set Date: Sunday March 02nd 2025 */
   rtcDateConfig.Date = dia;
   rtcDateConfig.Month = mes;
   rtcDateConfig.Year = anio; //Sumar 2000 cuando le llamemos
+  rtcDateConfig.WeekDay = weekDay;
   
   if(HAL_RTC_SetDate(&rtchandler,&rtcDateConfig,RTC_FORMAT_BCD) != HAL_OK)
   {
     /* Initialization Error */
    // Error_Handler();
+    errorDia += 1;
   }
   
   HAL_RTCEx_BKUPWrite(&rtchandler, RTC_BKP_DR1, 0x32F2);
@@ -102,11 +138,29 @@ void RTC_Show(uint8_t *showtime, uint8_t *showdate){
   sprintf((char *)showtime, "%2d:%2d:%2d", rtcTimeConfig.Hours, rtcTimeConfig.Minutes, rtcTimeConfig.Seconds);
   /* Display date Format : mm-dd-yy */
   sprintf((char *)showdate, "%2d-%2d-%2d", rtcDateConfig.Date,rtcDateConfig.Month, 2000 + rtcDateConfig.Year);
+}
+
+static void init_LSE_Clock (void){
   
-  /* Display user text lines */
-  escrituraLCD_V2(1, (char*)showtime);
-  escrituraLCD_V2(2, (char*)showdate);
+  RCC_PeriphCLKInitTypeDef  PeriphClkInitStruct = {0};
+  RCC_OscInitTypeDef        RCC_OscInitStruct = {0};
   
-  /*Update LCD Info*/
-  LCD_Update ();
+  /* LSE Enable */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+//  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+    errorLSE += 1;
+    while (1);  // Error en la configuración
+  }
+  
+  /* Select LSE as RTC source clock*/
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+  
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK) {
+    errorPeriferico += 1;
+    while (1);  // Error en la configuración
+  }
 }

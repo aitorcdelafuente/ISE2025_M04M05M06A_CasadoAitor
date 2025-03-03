@@ -10,7 +10,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 #include <time.h>
-#include "lcd.h"
+#include "stdio.h"
+#include "string.h"
 
 #ifdef _RTE_
 #include "RTE_Components.h"             // Component selection
@@ -21,13 +22,14 @@
 
 /* Exported constants --------------------------------------------------------*/
 /* Defines related to Clock configuration */
-#define RTC_ASYNCH_PREDIV  0x7F   /* LSE as RTC clock */
-#define RTC_SYNCH_PREDIV   0x00FF /* LSE as RTC clock */
+#define RTC_ASYNCH_PREDIV  0x7F   /* LSE as RTC clock */ //(Valor = 127)
+#define RTC_SYNCH_PREDIV   0x00FF /* LSE as RTC clock */ //(Valor = 255)
 
 /* Exported functions --------------------------------------------------------*/
 void RTC_Init (void);
-void RTC_Time_Config (uint8_t hor, uint8_t min, uint8_t seg);
-void RTC_Date_Config (uint8_t dia, uint8_t mes, uint8_t anio);
+void RTC_Time_Config (void);
+void RTC_Date_Config (void);
 void RTC_Show(uint8_t *showtime, uint8_t *showdate);
+static void init_LSE_Clock (void);
 
 #endif /* __RTC_H */

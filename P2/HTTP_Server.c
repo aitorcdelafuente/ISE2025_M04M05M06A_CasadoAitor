@@ -22,7 +22,7 @@
 #include "leds.h"
 #include "lcd.h"
 #include "adc.h"
-#include "lcd.h"
+#include "rtc.h"
 
 // Main stack size must be multiple of 8 Bytes
 #define APP_MAIN_STK_SZ (1024U)
@@ -41,20 +41,25 @@ extern char lcd_text[2][20+1];
 
 extern osThreadId_t TID_Display;
 extern osThreadId_t TID_Led;
-extern osThreadId_t TID_ADC;
+extern osThreadId_t TID_RTC;
 
 bool LEDrun;
 char lcd_text[2][20+1] = { "LCD line 1",
                            "LCD line 2" };
 ADC_HandleTypeDef adchandle;
+                           
+uint8_t aShowTime[10] = {0};
+uint8_t aShowDate[10] = {0}; 
 
 /* Thread IDs */
 osThreadId_t TID_Display;
 osThreadId_t TID_Led;
+osThreadId_t TID_RTC;
 
 /* Thread declarations */
 static void BlinkLed (void *arg);
 static void Display  (void *arg);
+static void RealTimeClock (void *arg);  
 
 __NO_RETURN void app_main (void *arg);
 
@@ -141,6 +146,23 @@ static __NO_RETURN void BlinkLed (void *arg) {
   }
 }
 
+static __NO_RETURN void RealTimeClock (void *arg){
+  
+  (void)arg;
+  
+  while(1){
+    RTC_Show(aShowTime, aShowDate);
+    
+    memcpy(lcd_text[0], aShowTime, sizeof(aShowTime));
+    lcd_text[0][sizeof(aShowTime)] = '\0';
+    
+    memcpy(lcd_text[1], aShowDate, sizeof(aShowDate));
+    lcd_text[1][sizeof(aShowDate)] = '\0';
+    
+    osThreadFlagsSet (TID_Display, 0x50);
+  }
+}
+
 /*----------------------------------------------------------------------------
   Main Thread 'main': Run Network
  *---------------------------------------------------------------------------*/
@@ -157,8 +179,12 @@ __NO_RETURN void app_main (void *arg) {
   ADC1_pins_F429ZI_config ();
   ADC_Init_Single_Conversion (&adchandle, ADC1);
   
+  //Inicialización Real Time Clock
+  RTC_Init ();
+  
   TID_Led     = osThreadNew (BlinkLed, NULL, NULL);
   TID_Display = osThreadNew (Display,  NULL, NULL);
+  TID_RTC     = osThreadNew (RealTimeClock, NULL, NULL);
 
   osThreadExit();
 }
