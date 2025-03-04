@@ -42,6 +42,7 @@ extern char lcd_text[2][20+1];
 extern osThreadId_t TID_Display;
 extern osThreadId_t TID_Led;
 extern osThreadId_t TID_RTC;
+extern osThreadId_t TID_Alarm;
 
 
 bool LEDrun;

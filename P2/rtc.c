@@ -16,8 +16,8 @@ uint8_t errorLSE = 0;
 uint8_t errorPeriferico = 0;
 
 uint8_t hora = 0x14;
-uint8_t min = 0x24;
-uint8_t seg = 0x32;
+uint8_t min = 0x59;
+uint8_t seg = 0x50;
 
 uint8_t dia = 0x03;
 uint8_t mes = RTC_MONTH_MARCH;
@@ -184,5 +184,4 @@ void RTC_SetAlarm (void){
   
   HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn); //Habilita ambas alarmas
   HAL_RTC_SetAlarm_IT(&rtchandler, &alarmConfig, RTC_FORMAT_BIN);
-  //CLEAR_BIT(rtchandler.Instance->CR, RTC_CR_ALRAIE);
 }

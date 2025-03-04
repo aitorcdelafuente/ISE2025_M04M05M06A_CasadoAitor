@@ -380,6 +380,28 @@ uint32_t netCGI_Script (const char *env, char *buf, uint32_t buflen, uint32_t *p
           break;
       }
       break;
+    
+    case 'h':
+      // RTC from 'time.cgi'
+      switch(env[2]){
+        case 1:
+          break;
+        
+        case 2:
+          break;
+      }
+      break;
+    
+    case 'j':
+      // RTC from 'time.cgx'
+      switch(env[2]){
+        case 1:
+          break;
+        
+        case 2:
+          break;
+      }
+      break;
 
     case 'x':
       // AD Input from 'ad.cgx'
@@ -398,6 +420,7 @@ uint32_t netCGI_Script (const char *env, char *buf, uint32_t buflen, uint32_t *p
       adv = AD_in (1);
       len = (uint32_t)sprintf (buf, &env[1], adv);
       break;
+    
   }
   return (len);
 }
