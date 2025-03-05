@@ -29,6 +29,12 @@
 /* Exported variables --------------------------------------------------------*/
 extern RTC_HandleTypeDef rtchandler;
 extern volatile bool alarmCheck;
+extern osMessageQueueId_t mid_MsgQueueRTC; // id de la cola
+
+typedef struct{
+  char hora[10];
+  char fecha[10];
+}t_RTCStruct;
 
 /* Exported functions --------------------------------------------------------*/
 void RTC_Init (void);
@@ -39,3 +45,4 @@ static void init_LSE_Clock (void);
 void RTC_SetAlarm (void);
 
 #endif /* __RTC_H */
+  

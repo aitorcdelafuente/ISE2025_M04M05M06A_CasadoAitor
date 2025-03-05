@@ -21,7 +21,7 @@
 //   <i>Value FF-FF-FF-FF-FF-FF is not allowed,
 //   <i>LSB of first byte must be 0 (an ethernet Multicast bit).
 //   <i>Default: "1E-30-6C-A2-45-5E"
-#define ETH0_MAC_ADDR           "1E-30-6C-A2-45-22"
+#define ETH0_MAC_ADDR           "1E-30-6C-A2-45-5E"
 
 //   <e>VLAN
 //   <i>Enable or disable Virtual LAN
@@ -118,7 +118,7 @@
 //     <q>NetBIOS Name Service
 //     <i>When this option is enabled, the embedded host can be
 //     <i>accessed by its name on local LAN using NBNS protocol.
-#define ETH0_NBNS_ENABLE        0
+#define ETH0_NBNS_ENABLE        1
 
 //     <e>Dynamic Host Configuration
 //     <i>When this option is enabled, local IP address, Net Mask

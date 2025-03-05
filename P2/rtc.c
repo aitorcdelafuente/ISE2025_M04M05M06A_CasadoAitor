@@ -5,6 +5,8 @@
 
 #include "rtc.h"
 
+osMessageQueueId_t mid_MsgQueueRTC; // id de la cola
+
 RTC_HandleTypeDef rtchandler;
 RTC_TimeTypeDef rtcTimeConfig = {0};
 RTC_DateTypeDef rtcDateConfig = {0};
@@ -14,6 +16,7 @@ uint8_t errorDia = 0;
 uint8_t errorHora = 0;
 uint8_t errorLSE = 0;
 uint8_t errorPeriferico = 0;
+uint8_t errorQueue = 0;
 
 uint8_t hora = 0x14;
 uint8_t min = 0x59;
@@ -23,6 +26,8 @@ uint8_t dia = 0x05;
 uint8_t mes = RTC_MONTH_MARCH;
 uint8_t anio = 0x25;
 uint8_t weekDay = RTC_WEEKDAY_MONDAY;
+
+t_RTCStruct textoRTC;
 
 volatile bool alarmCheck = false;
 
@@ -54,7 +59,7 @@ void RTC_Init (void){
     /* Initialization Error */
   }
   
-    /*##-2- Check if Data stored in BackUp register1: No Need to reconfigure RTC#*/
+    /*##-3- Check if Data stored in BackUp register1: No Need to reconfigure RTC#*/
   /* Read the Back Up Register 1 Data */
   if (HAL_RTCEx_BKUPRead(&rtchandler, RTC_BKP_DR1) != 0x32F2)
   {
@@ -68,6 +73,8 @@ void RTC_Init (void){
     /* Clear source Reset Flag */
     __HAL_RCC_CLEAR_RESET_FLAGS();
   }
+  
+  
 }
 
 /*La razón por la cual se asignan dos prescalers (asíncrono y síncrono) es porque al estar usando el LSE, ya que
@@ -102,14 +109,11 @@ void RTC_Time_Config (uint8_t hh, uint8_t mm, uint8_t ss){
     /* Initialization Error */
     errorHora += 1;
   }
-  
-  //Guarda en el registro back-up 1 el dato en hexadecimal. Dicho valor puede ir del 0 al 19
-//  HAL_RTCEx_BKUPWrite(&rtchandler, RTC_BKP_DR1, 0x32F2); 
 }
 
 /**
   * @brief  Función que configura la fecha
-  * @param  Dia, Mes, Año, dia, mes y años a configurar
+  * @param  Dia, Mes, Año
   * @retval None
   */
 void RTC_Date_Config (uint8_t dd, uint8_t ms, uint8_t yr){

@@ -38,6 +38,7 @@ extern void     netDHCP_Notify (uint32_t if_num, uint8_t option, const uint8_t *
 
 extern bool LEDrun;
 extern char lcd_text[2][20+1];
+extern char rtc_text[2][20+1];
 
 extern osThreadId_t TID_Display;
 extern osThreadId_t TID_Led;
@@ -47,13 +48,11 @@ extern osThreadId_t TID_Alarm;
 bool LEDrun;
 char lcd_text[2][20+1] = { "LCD line 1",
                            "LCD line 2" };
+char rtc_text[2][20+1] = {0};
 ADC_HandleTypeDef adchandle;
                            
 uint8_t aShowTime[10] = {0};
 uint8_t aShowDate[10] = {0}; 
-
-extern uint8_t aShowTime[10];
-extern uint8_t aShowDate[10]; 
 
 /* Thread IDs */
 osThreadId_t TID_Display;

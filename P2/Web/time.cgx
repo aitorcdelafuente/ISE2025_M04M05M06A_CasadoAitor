@@ -1,10 +1,10 @@
 t <form>
 t <text>
-t <id>time</id>
+t <id>hora_rtc</id>
 c h 1 <value>%s</value>
 t </text>
 t <text>
-t <id>date</id>
+t <id>fecha_rtc</id>
 c h 2 <value>%s</value>
 t </text>
 t </form>

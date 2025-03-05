@@ -429,3 +429,4 @@ void limpiar_L2(void){
     buffer[i] = NULL;
   }
 }
+  

@@ -16,6 +16,7 @@
 #include <string.h>
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
 #include "rl_net.h"                     // Keil.MDK-Pro::Network:CORE
+#include "rtc.h"
 
 //#include "Board_LED.h"                  // ::Board Support:LED
 #include "leds.h"
@@ -31,6 +32,7 @@ extern uint8_t  get_button (void);
 
 extern bool LEDrun;
 extern char lcd_text[2][20+1];
+extern char rtc_text[2][20+1];
 extern osThreadId_t TID_Display;
 
 // Local variables.
@@ -383,12 +385,11 @@ uint32_t netCGI_Script (const char *env, char *buf, uint32_t buflen, uint32_t *p
     
     case 'h':
       // RTC from 'time.cgi'
-      switch(env[2]){
-        case 1:
+      switch (env[2]) {
+        case '1':
           len = (uint32_t)sprintf (buf, &env[4], lcd_text[0]);
           break;
-        
-        case 2:
+        case '2':
           len = (uint32_t)sprintf (buf, &env[4], lcd_text[1]);
           break;
       }
