@@ -19,7 +19,7 @@ uint8_t hora = 0x14;
 uint8_t min = 0x59;
 uint8_t seg = 0x50;
 
-uint8_t dia = 0x03;
+uint8_t dia = 0x05;
 uint8_t mes = RTC_MONTH_MARCH;
 uint8_t anio = 0x25;
 uint8_t weekDay = RTC_WEEKDAY_MONDAY;
@@ -59,8 +59,8 @@ void RTC_Init (void){
   if (HAL_RTCEx_BKUPRead(&rtchandler, RTC_BKP_DR1) != 0x32F2)
   {
     /* Configure RTC Calendar */
-    RTC_Time_Config();
-    RTC_Date_Config();
+    RTC_Time_Config(hora, min, seg);
+    RTC_Date_Config(dia, mes, anio);
     RTC_SetAlarm ();
   }
   else
@@ -86,13 +86,13 @@ void RTC_Init (void){
   * @param  Hora, minutos, segundos, dia, mes y años a configurar
   * @retval None
   */
-void RTC_Time_Config (void){
+void RTC_Time_Config (uint8_t hh, uint8_t mm, uint8_t ss){
   
   /*##-1- Configure the Time #################################################*/
   /* Set Time: 20:24:58 */
-  rtcTimeConfig.Hours = hora;
-  rtcTimeConfig.Minutes = min;
-  rtcTimeConfig.Seconds = seg;
+  rtcTimeConfig.Hours = hh;
+  rtcTimeConfig.Minutes = mm;
+  rtcTimeConfig.Seconds = ss;
   rtcTimeConfig.TimeFormat = RTC_HOURFORMAT_24;
   rtcTimeConfig.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
   rtcTimeConfig.StoreOperation = RTC_STOREOPERATION_RESET;
@@ -112,13 +112,13 @@ void RTC_Time_Config (void){
   * @param  Dia, Mes, Año, dia, mes y años a configurar
   * @retval None
   */
-void RTC_Date_Config (void){
+void RTC_Date_Config (uint8_t dd, uint8_t ms, uint8_t yr){
   
   /*##-2- Configure the Date #################################################*/
   /* Set Date: Sunday March 02nd 2025 */
-  rtcDateConfig.Date = dia;
-  rtcDateConfig.Month = mes;
-  rtcDateConfig.Year = anio; //Sumar 2000 cuando le llamemos
+  rtcDateConfig.Date = dd;
+  rtcDateConfig.Month = ms;
+  rtcDateConfig.Year = yr; //Sumar 2000 cuando le llamemos
   rtcDateConfig.WeekDay = weekDay;
   
   if(HAL_RTC_SetDate(&rtchandler,&rtcDateConfig,RTC_FORMAT_BCD) != HAL_OK)
@@ -139,9 +139,9 @@ void RTC_Show(uint8_t *showtime, uint8_t *showdate){
   HAL_RTC_GetDate(&rtchandler, &rtcDateConfig, RTC_FORMAT_BIN);
   
   /* Display time Format : hh:mm:ss */
-  sprintf((char *)showtime, "%2d:%2d:%2d", rtcTimeConfig.Hours, rtcTimeConfig.Minutes, rtcTimeConfig.Seconds);
+  sprintf((char *)showtime, "%02d:%02d:%02d", rtcTimeConfig.Hours, rtcTimeConfig.Minutes, rtcTimeConfig.Seconds);
   /* Display date Format : mm-dd-yy */
-  sprintf((char *)showdate, "%2d-%2d-%2d", rtcDateConfig.Date,rtcDateConfig.Month, 2000 + rtcDateConfig.Year);
+  sprintf((char *)showdate, "%02d-%02d-%d", rtcDateConfig.Date, rtcDateConfig.Month, 2000 + rtcDateConfig.Year);
 }
 
 static void init_LSE_Clock (void){

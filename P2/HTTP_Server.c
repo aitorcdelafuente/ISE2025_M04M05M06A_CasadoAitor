@@ -44,7 +44,6 @@ extern osThreadId_t TID_Led;
 extern osThreadId_t TID_RTC;
 extern osThreadId_t TID_Alarm;
 
-
 bool LEDrun;
 char lcd_text[2][20+1] = { "LCD line 1",
                            "LCD line 2" };
@@ -52,6 +51,9 @@ ADC_HandleTypeDef adchandle;
                            
 uint8_t aShowTime[10] = {0};
 uint8_t aShowDate[10] = {0}; 
+
+extern uint8_t aShowTime[10];
+extern uint8_t aShowDate[10]; 
 
 /* Thread IDs */
 osThreadId_t TID_Display;
@@ -167,7 +169,7 @@ static __NO_RETURN void RealTimeClock (void *arg){
     lcd_text[1][sizeof(aShowDate)] = '\0';
     
     //Envía al hilo del LCD para escribir
-    osThreadFlagsSet (TID_Display, 0x50); 
+    osThreadFlagsSet (TID_Display, 0x50);
     
   }
 }

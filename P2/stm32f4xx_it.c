@@ -68,6 +68,8 @@ void RTC_Alarm_IRQHandler (void){
 }
 
 void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc){
+  
+  __HAL_RTC_ALARM_CLEAR_FLAG(&rtchandler, RTC_FLAG_ALRAF);
   alarmCheck = true;
 }
 /******************************************************************************/

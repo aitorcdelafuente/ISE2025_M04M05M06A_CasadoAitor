@@ -385,20 +385,11 @@ uint32_t netCGI_Script (const char *env, char *buf, uint32_t buflen, uint32_t *p
       // RTC from 'time.cgi'
       switch(env[2]){
         case 1:
+          len = (uint32_t)sprintf (buf, &env[4], lcd_text[0]);
           break;
         
         case 2:
-          break;
-      }
-      break;
-    
-    case 'j':
-      // RTC from 'time.cgx'
-      switch(env[2]){
-        case 1:
-          break;
-        
-        case 2:
+          len = (uint32_t)sprintf (buf, &env[4], lcd_text[1]);
           break;
       }
       break;
