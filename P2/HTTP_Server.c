@@ -45,6 +45,7 @@ extern osThreadId_t TID_Display;
 extern osThreadId_t TID_Led;
 extern osThreadId_t TID_RTC;
 extern osThreadId_t TID_Alarm;
+extern osThreadId_t TID_User;
 
 bool LEDrun;
 char lcd_text[2][20+1] = { "LCD line 1",
@@ -60,6 +61,7 @@ osThreadId_t TID_Display;
 osThreadId_t TID_Led;
 osThreadId_t TID_RTC;
 osThreadId_t TID_Alarm;
+osThreadId_t TID_User;
 
 /* Timers IDs */
 osTimerId_t id_tim_1s;
@@ -71,7 +73,7 @@ osStatus_t status_6s;
 osTimerId_t id_tim_3m;
 osStatus_t status_3m;
 
-static int8_t SetTimers (void);
+static void SetTimers (void);
 void Timer_Callback_1s (void);
 void Timer_Callback_6s (void);
 void Timer_Callback_3m (void);
@@ -80,12 +82,15 @@ void Timer_Callback_3m (void);
 uint8_t cincoSeg = 0;
 uint8_t dosSeg = 0;
 uint8_t tim_1s = 0;
+uint8_t tim_1s_vcc = 0;
+uint8_t timersError = 0;
 
 /* Thread declarations */
 static void BlinkLed (void *arg);
 static void Display  (void *arg);
 static void RealTimeClock (void *arg);
 static void AlarmHandler (void *arg);
+static void UserHandler (void *arg);
 
 __NO_RETURN void app_main (void *arg);
 
@@ -195,18 +200,39 @@ static __NO_RETURN void RealTimeClock (void *arg){
 static __NO_RETURN void AlarmHandler (void *arg){
   
   (void)arg;
+  uint32_t alarmFlag = 0x0U;
   
   while(1){
-    
-    if(alarmCheck == true){
-      alarmCheck =! alarmCheck;
       
+    alarmFlag = osThreadFlagsWait(0x01U, osFlagsWaitAll, osWaitForever);
+    if(alarmFlag == 0x01){
       for(cincoSeg = 0; cincoSeg < 10; cincoSeg++){
-        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-        osDelay(500);
+      HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+      osDelay(500);
       }
     }
   }
+}
+
+static __NO_RETURN void UserHandler (void *arg){
+  
+  (void)arg;
+  uint32_t userFlag = 0x0U;
+  
+  while(1){
+    userFlag = osThreadFlagsWait(0x01U, osFlagsWaitAll, osWaitForever);
+    
+    if(userFlag == 0x01){
+      RTC_Time_Config(0, 0, 0);
+      RTC_Date_Config(1, 1, 0, 1);
+      //Pulso boton usuario -> Enciendo led azul
+      for(cincoSeg = 0; cincoSeg < 10; cincoSeg++){
+        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);
+        osDelay(100);
+      }
+    }
+  }
+  
 }
 
 /**---------------------------------------------------------------------------*
@@ -231,15 +257,19 @@ __NO_RETURN void app_main (void *arg) {
   //Init Timers
   SetTimers ();
   
+  //Init Botton User
+  init_User();
+  
 //  TID_Led     = osThreadNew (BlinkLed, NULL, NULL);
   TID_Display = osThreadNew (Display,  NULL, NULL);
   TID_RTC     = osThreadNew (RealTimeClock, NULL, NULL);
   TID_Alarm   = osThreadNew (AlarmHandler, NULL, NULL);
+  TID_User    = osThreadNew (UserHandler, NULL, NULL);
   
   osThreadExit();
 }
 
-static int8_t SetTimers (void){
+static void SetTimers (void){
   
   id_tim_1s = osTimerNew((osTimerFunc_t)&Timer_Callback_1s, osTimerPeriodic, NULL, NULL);
   id_tim_6s = osTimerNew((osTimerFunc_t)&Timer_Callback_6s, osTimerOnce, NULL, NULL);
@@ -247,34 +277,34 @@ static int8_t SetTimers (void){
   
   if(id_tim_6s != NULL || id_tim_3m != NULL || id_tim_1s != NULL){
     if(status_6s != osOK || status_3m != osOK || status_1s != osOK){
-      return -1;
+      timersError = 0;
     }
   }
 }
 
 void Timer_Callback_1s (void){
-  
-  
-  if(tim_1s < 6){ //Poner 4
+
+  //Lo enciendo en la configuración inicial y tras 3 minutos
+  if(tim_1s < 10){
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);
     tim_1s += 1;
-    
   }else{
     osTimerStop(id_tim_1s);
     tim_1s = 0;
   }
+
 }
 
 void Timer_Callback_6s (void){
   
-  osTimerStart(id_tim_1s, 500);
+  osTimerStart(id_tim_1s, 200); //Pongo esto para la configuración inicial al conectar Vcc
   SNTP_Init ();
   osTimerStart(id_tim_3m, 180000);
 }
 
 void Timer_Callback_3m (void){
   
-  osTimerStart(id_tim_1s, 500);
+  osTimerStart(id_tim_1s, 200); //Tras sincronizar
   SNTP_Init ();
 }
 

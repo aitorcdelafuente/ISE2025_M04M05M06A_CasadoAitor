@@ -43,6 +43,7 @@
 #include "main.h"
 #include "stm32f4xx_it.h"
 #include "rtc.h"
+#include "sntp.h"
 
 #ifdef _RTE_
 #include "RTE_Components.h"             /* Component selection */
@@ -60,7 +61,8 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-
+extern osThreadId_t TID_Alarm;
+extern osThreadId_t TID_User;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 void RTC_Alarm_IRQHandler (void){
@@ -70,7 +72,18 @@ void RTC_Alarm_IRQHandler (void){
 void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc){
   
   __HAL_RTC_ALARM_CLEAR_FLAG(&rtchandler, RTC_FLAG_ALRAF);
-  alarmCheck = true;
+  osThreadFlagsSet(TID_Alarm, 0x01U);
+}
+
+void EXTI15_10_IRQHandler(void){ 
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13); 
+  
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_PIN){
+  if(GPIO_PIN == GPIO_PIN_13){ //Pin del pulsador
+    osThreadFlagsSet(TID_User, 0x01U);
+  }
 }
 /******************************************************************************/
 /*            Cortex-M4 Processor Exceptions Handlers                         */

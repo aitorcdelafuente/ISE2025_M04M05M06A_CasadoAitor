@@ -26,6 +26,7 @@ static void netSNTP_Callback (uint32_t seconds, uint32_t seconds_fracation){
   }else{
     //time_t segundosEpoch = (time_t)seconds; //Cambiamos formato variable que almacena los seg. desde 1970 a tipo time_t
                                             //para pasarlo por parámetro a la función localtime
+    //En horario de verano, habrá que sumar dos horas
     t_StructSNTP = *localtime(&seconds); //Segundos desde 1 enero de 1970. Se castea a la estructura de tipo tm y lo almacena en la estructura
     
     /* Configure Date */
@@ -43,7 +44,7 @@ static void netSNTP_Callback (uint32_t seconds, uint32_t seconds_fracation){
     }
     
         /* Configure Time */
-    rtcTimeConfig.Hours = (t_StructSNTP.tm_hour == 23) ? 0 : (t_StructSNTP.tm_hour + 1);
+    rtcTimeConfig.Hours = (t_StructSNTP.tm_hour > 23) ? 0 : (t_StructSNTP.tm_hour + 1);
     rtcTimeConfig.Minutes = t_StructSNTP.tm_min;
     rtcTimeConfig.Seconds = t_StructSNTP.tm_sec;
     rtcTimeConfig.TimeFormat = (t_StructSNTP.tm_hour < 12) ? RTC_HOURFORMAT12_AM : RTC_HOURFORMAT12_PM;
@@ -58,4 +59,20 @@ static void netSNTP_Callback (uint32_t seconds, uint32_t seconds_fracation){
     
     HAL_RTCEx_BKUPWrite(&rtchandler, RTC_BKP_DR1, 0x32F2);
   }
+}
+
+void init_User (void){
+
+  GPIO_InitTypeDef GPIO_InitStruct;
+
+  /*Enable clock to GPIO-C*/
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+  
 }
