@@ -29,7 +29,8 @@
 /* Exported variables --------------------------------------------------------*/
 extern RTC_HandleTypeDef rtchandler;
 extern volatile bool alarmCheck;
-extern osMessageQueueId_t mid_MsgQueueRTC; // id de la cola
+extern RTC_TimeTypeDef rtcTimeConfig;
+extern RTC_DateTypeDef rtcDateConfig;
 
 typedef struct{
   char hora[10];

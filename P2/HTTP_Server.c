@@ -23,6 +23,7 @@
 #include "lcd.h"
 #include "adc.h"
 #include "rtc.h"
+#include "sntp.h"
 
 // Main stack size must be multiple of 8 Bytes
 #define APP_MAIN_STK_SZ (1024U)
@@ -60,8 +61,25 @@ osThreadId_t TID_Led;
 osThreadId_t TID_RTC;
 osThreadId_t TID_Alarm;
 
+/* Timers IDs */
+osTimerId_t id_tim_1s;
+osStatus_t status_1s;
+
+osTimerId_t id_tim_6s;
+osStatus_t status_6s;
+
+osTimerId_t id_tim_3m;
+osStatus_t status_3m;
+
+static int8_t SetTimers (void);
+void Timer_Callback_1s (void);
+void Timer_Callback_6s (void);
+void Timer_Callback_3m (void);
+
 /* Timers IDs*/
 uint8_t cincoSeg = 0;
+uint8_t dosSeg = 0;
+uint8_t tim_1s = 0;
 
 /* Thread declarations */
 static void BlinkLed (void *arg);
@@ -157,6 +175,7 @@ static __NO_RETURN void BlinkLed (void *arg) {
 static __NO_RETURN void RealTimeClock (void *arg){
   
   (void)arg;
+  osTimerStart(id_tim_6s, 6000);
   
   while(1){
     RTC_Show(aShowTime, aShowDate);
@@ -182,9 +201,9 @@ static __NO_RETURN void AlarmHandler (void *arg){
     if(alarmCheck == true){
       alarmCheck =! alarmCheck;
       
-      for(cincoSeg = 0; cincoSeg < 5; cincoSeg++){
+      for(cincoSeg = 0; cincoSeg < 10; cincoSeg++){
         HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-        osDelay(1000);
+        osDelay(500);
       }
     }
   }
@@ -209,10 +228,54 @@ __NO_RETURN void app_main (void *arg) {
   //Inicialización Real Time Clock
   RTC_Init ();
   
-  TID_Led     = osThreadNew (BlinkLed, NULL, NULL);
+  //Init Timers
+  SetTimers ();
+  
+//  TID_Led     = osThreadNew (BlinkLed, NULL, NULL);
   TID_Display = osThreadNew (Display,  NULL, NULL);
   TID_RTC     = osThreadNew (RealTimeClock, NULL, NULL);
   TID_Alarm   = osThreadNew (AlarmHandler, NULL, NULL);
   
   osThreadExit();
 }
+
+static int8_t SetTimers (void){
+  
+  id_tim_1s = osTimerNew((osTimerFunc_t)&Timer_Callback_1s, osTimerPeriodic, NULL, NULL);
+  id_tim_6s = osTimerNew((osTimerFunc_t)&Timer_Callback_6s, osTimerOnce, NULL, NULL);
+  id_tim_3m = osTimerNew((osTimerFunc_t)&Timer_Callback_3m, osTimerPeriodic, NULL, NULL);
+  
+  if(id_tim_6s != NULL || id_tim_3m != NULL || id_tim_1s != NULL){
+    if(status_6s != osOK || status_3m != osOK || status_1s != osOK){
+      return -1;
+    }
+  }
+}
+
+void Timer_Callback_1s (void){
+  
+  
+  if(tim_1s < 6){ //Poner 4
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);
+    tim_1s += 1;
+    
+  }else{
+    osTimerStop(id_tim_1s);
+    tim_1s = 0;
+  }
+}
+
+void Timer_Callback_6s (void){
+  
+  osTimerStart(id_tim_1s, 500);
+  SNTP_Init ();
+  osTimerStart(id_tim_3m, 180000);
+}
+
+void Timer_Callback_3m (void){
+  
+  osTimerStart(id_tim_1s, 500);
+  SNTP_Init ();
+}
+
+

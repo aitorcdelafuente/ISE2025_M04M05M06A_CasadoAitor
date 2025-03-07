@@ -18,15 +18,6 @@ uint8_t errorLSE = 0;
 uint8_t errorPeriferico = 0;
 uint8_t errorQueue = 0;
 
-uint8_t hora = 0x14;
-uint8_t min = 0x59;
-uint8_t seg = 0x50;
-
-uint8_t dia = 0x05;
-uint8_t mes = RTC_MONTH_MARCH;
-uint8_t anio = 0x25;
-uint8_t weekDay = RTC_WEEKDAY_MONDAY;
-
 t_RTCStruct textoRTC;
 
 volatile bool alarmCheck = false;
@@ -64,8 +55,8 @@ void RTC_Init (void){
   if (HAL_RTCEx_BKUPRead(&rtchandler, RTC_BKP_DR1) != 0x32F2)
   {
     /* Configure RTC Calendar */
-    RTC_Time_Config(hora, min, seg);
-    RTC_Date_Config(dia, mes, anio);
+//    RTC_Time_Config(hora, min, seg);
+//    RTC_Date_Config(dia, mes, anio);
     RTC_SetAlarm ();
   }
   else
@@ -108,6 +99,7 @@ void RTC_Time_Config (uint8_t hh, uint8_t mm, uint8_t ss){
   {
     /* Initialization Error */
     errorHora += 1;
+    while(1);
   }
 }
 
@@ -123,13 +115,14 @@ void RTC_Date_Config (uint8_t dd, uint8_t ms, uint8_t yr){
   rtcDateConfig.Date = dd;
   rtcDateConfig.Month = ms;
   rtcDateConfig.Year = yr; //Sumar 2000 cuando le llamemos
-  rtcDateConfig.WeekDay = weekDay;
+  rtcDateConfig.WeekDay = RTC_WEEKDAY_FRIDAY;
   
   if(HAL_RTC_SetDate(&rtchandler,&rtcDateConfig,RTC_FORMAT_BCD) != HAL_OK)
   {
     /* Initialization Error */
    // Error_Handler();
     errorDia += 1;
+    while(1);
   }
   
   HAL_RTCEx_BKUPWrite(&rtchandler, RTC_BKP_DR1, 0x32F2);
