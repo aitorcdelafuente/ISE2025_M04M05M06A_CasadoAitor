@@ -89,6 +89,7 @@ uint8_t dosSeg = 0;
 uint8_t tim_1s = 0;
 uint8_t tim_1s_vcc = 0;
 uint8_t timersError = 0;
+uint8_t vecesPulsado = 0;
 
 /* Thread declarations */
 static void BlinkLed (void *arg);
@@ -228,13 +229,23 @@ static __NO_RETURN void UserHandler (void *arg){
     userFlag = osThreadFlagsWait(0x01U, osFlagsWaitAll, osWaitForever);
     
     if(userFlag == 0x01){
-//      RTC_Time_Config(0, 0, 0);
-//      RTC_Date_Config(1, 1, 0, 1);
-      //Pulso boton usuario -> Enciendo led azul
-      for(cincoSeg = 0; cincoSeg < 10; cincoSeg++){
-        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);
-        osDelay(100);
+      if(vecesPulsado == 0){
+        vecesPulsado += 1;
+        for(cincoSeg = 0; cincoSeg < 11; cincoSeg++){
+          HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);
+          osDelay(100);
+        }
+      }else{
+        RTC_Time_Config(0, 0, 0);
+        RTC_Date_Config(1, 1, 0, 1);
+        //Pulso boton usuario -> Enciendo led azul
+        for(cincoSeg = 0; cincoSeg < 10; cincoSeg++){
+          HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);
+          osDelay(100);
+        }
       }
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
+      userFlag = 0x0U;
     }
   }
 }

@@ -97,7 +97,7 @@ int main(void)
              handled in milliseconds basis.
        - Low Level Initialization
      */
-  HAL_Init();
+   HAL_Init();
 
   /* Configure the system clock to 168 MHz */
   SystemClock_Config();

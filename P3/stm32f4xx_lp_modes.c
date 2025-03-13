@@ -105,6 +105,9 @@ void SleepMode_Measure(void)
 //  BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
   Init_BlueButton_WAKEUP();
   
+  /* Disable ALARM IT*/
+  HAL_NVIC_DisableIRQ(RTC_Alarm_IRQn);//OJO, la alarma va por IT -> Despierta de modo sleep !
+  
   /*Encender led rojo*/
   LED_RED_Initialize ();
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
@@ -127,6 +130,9 @@ void SleepMode_Measure(void)
   
   /*Apagar led rojo*/
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+  
+  /* Vuelvo a activar la alarma */
+  HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn);
   
 }
 
