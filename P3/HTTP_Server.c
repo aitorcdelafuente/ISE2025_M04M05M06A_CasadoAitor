@@ -24,6 +24,7 @@
 #include "adc.h"
 #include "rtc.h"
 #include "sntp.h"
+#include "stm32f4xx_lp_modes.h"
 
 // Main stack size must be multiple of 8 Bytes
 #define APP_MAIN_STK_SZ (1024U)
@@ -70,12 +71,16 @@ osStatus_t status_1s;
 osTimerId_t id_tim_6s;
 osStatus_t status_6s;
 
+osTimerId_t id_tim_15s;
+osStatus_t status_15s;
+
 osTimerId_t id_tim_3m;
 osStatus_t status_3m;
 
 static void SetTimers (void);
 void Timer_Callback_1s (void);
 void Timer_Callback_6s (void);
+void Timer_Callback_15s (void);
 void Timer_Callback_3m (void);
 
 /* Timers IDs*/
@@ -223,8 +228,8 @@ static __NO_RETURN void UserHandler (void *arg){
     userFlag = osThreadFlagsWait(0x01U, osFlagsWaitAll, osWaitForever);
     
     if(userFlag == 0x01){
-      RTC_Time_Config(0, 0, 0);
-      RTC_Date_Config(1, 1, 0, 1);
+//      RTC_Time_Config(0, 0, 0);
+//      RTC_Date_Config(1, 1, 0, 1);
       //Pulso boton usuario -> Enciendo led azul
       for(cincoSeg = 0; cincoSeg < 10; cincoSeg++){
         HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_7);
@@ -257,9 +262,9 @@ __NO_RETURN void app_main (void *arg) {
   SetTimers ();
   
   //Init Botton User
-  init_User();
+//  init_User(); //Lo inicializo en la función SleepMode
   
-//  TID_Led     = osThreadNew (BlinkLed, NULL, NULL);
+  TID_Led     = osThreadNew (BlinkLed, NULL, NULL);
   TID_Display = osThreadNew (Display,  NULL, NULL);
   TID_RTC     = osThreadNew (RealTimeClock, NULL, NULL);
   TID_Alarm   = osThreadNew (AlarmHandler, NULL, NULL);
@@ -273,14 +278,16 @@ static void SetTimers (void){
   id_tim_1s = osTimerNew((osTimerFunc_t)&Timer_Callback_1s, osTimerPeriodic, NULL, NULL);
   id_tim_6s = osTimerNew((osTimerFunc_t)&Timer_Callback_6s, osTimerOnce, NULL, NULL);
   id_tim_3m = osTimerNew((osTimerFunc_t)&Timer_Callback_3m, osTimerPeriodic, NULL, NULL);
+  id_tim_15s = osTimerNew((osTimerFunc_t)&Timer_Callback_15s, osTimerOnce, NULL, NULL);
   
-  if(id_tim_6s != NULL || id_tim_3m != NULL || id_tim_1s != NULL){
-    if(status_6s != osOK || status_3m != osOK || status_1s != osOK){
+  if(id_tim_6s != NULL || id_tim_3m != NULL || id_tim_1s != NULL || id_tim_15s != NULL){
+    if(status_6s != osOK || status_3m != osOK || status_1s != osOK || status_15s != osOK){
       timersError = 0;
     }
   }
 }
 
+/* Timers Function 1s for LEDs P2 */
 void Timer_Callback_1s (void){
 
   //Lo enciendo en la configuración inicial y tras 3 minutos
@@ -291,12 +298,12 @@ void Timer_Callback_1s (void){
     osTimerStop(id_tim_1s);
     tim_1s = 0;
   }
-
 }
 
 void Timer_Callback_6s (void){
   
   osTimerStart(id_tim_1s, 200); //Pongo esto para la configuración inicial al conectar Vcc
+  osTimerStart(id_tim_15s, 15000); //Realmente no entra a los 16, sino a los 21 (15+6)
   SNTP_Init ();
   osTimerStart(id_tim_3m, 180000);
 }
@@ -305,4 +312,10 @@ void Timer_Callback_3m (void){
   
   osTimerStart(id_tim_1s, 200); //Tras sincronizar
   SNTP_Init ();
+}
+
+void Timer_Callback_15s (void){
+  
+  /* Enter Sleep Mode */
+  SleepMode_Measure();
 }

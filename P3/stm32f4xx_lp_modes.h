@@ -22,9 +22,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-//#include "stm32f4xx_it.h"
-//#include "stm32f4xx_hal_eth.h"
-//#include "lan8742A.h"
+#include "rtc.h"
+#include "stm32f4xx_hal.h"
+#include "rl_net.h"
+#include "leds.h"
 
 
 /* Exported types ------------------------------------------------------------*/
@@ -33,7 +34,9 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 void SleepMode_Measure(void);
+void Init_BlueButton_WAKEUP (void);
 void ETH_PhyEnterPowerDownMode(void);
 void ETH_PhyExitFromPowerDownMode(void);
+void LED_RED_Initialize (void);
 
 #endif /* __STM32F4xx_LP_MODES_H */
