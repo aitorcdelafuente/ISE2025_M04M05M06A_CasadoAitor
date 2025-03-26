@@ -232,7 +232,6 @@ static __NO_RETURN void UserHandler (void *arg){
       }
     }
   }
-  
 }
 
 /**---------------------------------------------------------------------------*
@@ -260,7 +259,7 @@ __NO_RETURN void app_main (void *arg) {
   //Init Botton User
   init_User();
   
-//  TID_Led     = osThreadNew (BlinkLed, NULL, NULL);
+  TID_Led     = osThreadNew (BlinkLed, NULL, NULL);
   TID_Display = osThreadNew (Display,  NULL, NULL);
   TID_RTC     = osThreadNew (RealTimeClock, NULL, NULL);
   TID_Alarm   = osThreadNew (AlarmHandler, NULL, NULL);
@@ -292,7 +291,6 @@ void Timer_Callback_1s (void){
     osTimerStop(id_tim_1s);
     tim_1s = 0;
   }
-
 }
 
 void Timer_Callback_6s (void){
