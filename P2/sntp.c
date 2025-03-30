@@ -7,6 +7,10 @@ uint8_t errorSNTP_2 = 0;
 uint8_t errorHora_sntp = 0;
 uint8_t errorDia_sntp = 0;
 
+extern RTC_HandleTypeDef rtchandler;
+extern RTC_TimeTypeDef rtcTimeConfig;
+extern RTC_DateTypeDef rtcDateConfig;
+
 static void netSNTP_Callback (uint32_t seconds, uint32_t seconds_fracation);
 
 void SNTP_Init (void){

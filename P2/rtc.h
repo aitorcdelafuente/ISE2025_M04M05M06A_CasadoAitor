@@ -27,8 +27,8 @@
 #define RTC_SYNCH_PREDIV   0x00FF /* LSE as RTC clock */ //(Valor = 255)
 
 /* Exported variables --------------------------------------------------------*/
-extern RTC_HandleTypeDef rtchandler;
 extern volatile bool alarmCheck;
+extern RTC_HandleTypeDef rtchandler;
 extern RTC_TimeTypeDef rtcTimeConfig;
 extern RTC_DateTypeDef rtcDateConfig;
 

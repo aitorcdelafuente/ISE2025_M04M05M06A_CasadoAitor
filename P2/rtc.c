@@ -12,6 +12,10 @@ RTC_TimeTypeDef rtcTimeConfig = {0};
 RTC_DateTypeDef rtcDateConfig = {0};
 RTC_AlarmTypeDef alarmConfig  = {0};
 
+extern RTC_HandleTypeDef rtchandler;
+extern RTC_TimeTypeDef rtcTimeConfig;
+extern RTC_DateTypeDef rtcDateConfig;
+
 uint8_t errorDia = 0;
 uint8_t errorHora = 0;
 uint8_t errorLSE = 0;

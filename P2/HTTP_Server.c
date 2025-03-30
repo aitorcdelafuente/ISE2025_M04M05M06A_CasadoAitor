@@ -47,6 +47,10 @@ extern osThreadId_t TID_RTC;
 extern osThreadId_t TID_Alarm;
 extern osThreadId_t TID_User;
 
+extern RTC_HandleTypeDef rtchandler;
+extern RTC_TimeTypeDef rtcTimeConfig;
+extern RTC_DateTypeDef rtcDateConfig;
+
 bool LEDrun;
 char lcd_text[2][20+1] = { "LCD line 1",
                            "LCD line 2" };

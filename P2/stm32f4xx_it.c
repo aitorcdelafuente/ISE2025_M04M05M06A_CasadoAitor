@@ -63,6 +63,7 @@
 /* Private variables ---------------------------------------------------------*/
 extern osThreadId_t TID_Alarm;
 extern osThreadId_t TID_User;
+extern RTC_HandleTypeDef rtchandler;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 void RTC_Alarm_IRQHandler (void){
