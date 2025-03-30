@@ -44,10 +44,10 @@ static void netSNTP_Callback (uint32_t seconds, uint32_t seconds_fracation){
     }
     
         /* Configure Time */
-    rtcTimeConfig.Hours = (t_StructSNTP.tm_hour > 23) ? 0 : (t_StructSNTP.tm_hour + 1);
+    rtcTimeConfig.Hours = t_StructSNTP.tm_hour + 2;
     rtcTimeConfig.Minutes = t_StructSNTP.tm_min;
     rtcTimeConfig.Seconds = t_StructSNTP.tm_sec;
-    rtcTimeConfig.TimeFormat = (t_StructSNTP.tm_hour < 12) ? RTC_HOURFORMAT12_AM : RTC_HOURFORMAT12_PM;
+    rtcTimeConfig.TimeFormat = RTC_HOURFORMAT12_PM;
     rtcTimeConfig.DayLightSaving = t_StructSNTP.tm_isdst;
     rtcTimeConfig.StoreOperation = RTC_STOREOPERATION_RESET;
     
@@ -58,6 +58,8 @@ static void netSNTP_Callback (uint32_t seconds, uint32_t seconds_fracation){
     }
     
     HAL_RTCEx_BKUPWrite(&rtchandler, RTC_BKP_DR1, 0x32F2);
+    
+    RTC_SetAlarm ();
   }
 }
 
