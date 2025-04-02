@@ -58,9 +58,8 @@ void TriggerPulse_Init (void){
   
   HAL_NVIC_EnableIRQ(TIM7_IRQn);
   
-  /* 10 us PULSE -> This GO in the Thread */
-//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
-//  HAL_TIM_Base_Start_IT(&htim7);
+  printf("Inicializacion TRIGGER");
+  
 }
 
 /* ****************************************************************************************
@@ -106,4 +105,6 @@ void EchoPulse_Init (void){
   sConfigIC.ICFilter = 0xF;
   HAL_TIM_IC_ConfigChannel(&htim4, &sConfigIC, TIM_CHANNEL_1);
   HAL_TIM_IC_Start_IT(&htim4, TIM_CHANNEL_1);
+  
+  printf("Inicializacion ECHO");
 }

@@ -3,6 +3,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
+#include "stdio.h"
 
 /* Exported types ------------------------------------------------------------*/
 extern TIM_HandleTypeDef htim7;

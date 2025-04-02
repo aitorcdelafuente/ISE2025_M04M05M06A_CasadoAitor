@@ -204,6 +204,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
   if(htim->Instance == TIM7){
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
     tim7_cnt += 1;
+    HAL_TIM_Base_Stop_IT(&htim7);
   }
 }
 
@@ -224,7 +225,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
       __HAL_TIM_SET_COUNTER(htim, 0);
       first_measure = 0;
       cm = (uint8_t)(us/58); //Datasheet function to obtain distance
-//      osThreadFlagsSet(tid_Thread, WATER_LEVEL);
+      osThreadFlagsSet(tid_Thread, WATER_LEVEL);
     }
   }
 }

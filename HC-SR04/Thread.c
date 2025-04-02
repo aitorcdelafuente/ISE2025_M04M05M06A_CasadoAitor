@@ -25,7 +25,7 @@ int Init_Thread (void) {
     return(-1);
   }
   
-  tid_timDist = osTimerNew((osTimerFunc_t)&TimDist_Callback, osTimerPeriodic, &exec, NULL);
+  tid_timDist = osTimerNew((osTimerFunc_t)&TimDist_Callback, osTimerOnce, &exec, NULL);
   if (tid_timDist != NULL) {
     if(status != osOK)
       return -1;
@@ -36,33 +36,48 @@ int Init_Thread (void) {
  
 void Thread (void *argument) {
  
-  osTimerStart(tid_timDist, 2000U);
+  osTimerStart(tid_timDist, 10000U);
   TriggerPulse_Init();
-//  EchoPulse_Init ();
+  EchoPulse_Init ();
+  uint32_t flagWTR = 0x00000000;
+  uint32_t flagTIM = 0x00000000;
+  printf("Se crea el hilo");
   
   while (1) {
     // Insert thread code here...
     
-    //Every two seconds
-    osThreadFlagsWait(TIMER_EVENT_FLAG, osFlagsWaitAny, osWaitForever);
+    //Every two seconds does a measure
+    flagTIM = osThreadFlagsWait(TIMER_EVENT_FLAG, osFlagsWaitAny, osWaitForever);
     
-    //Set 10 us TRIGGER
-    Init_HCSR04 ();
+    if(flagTIM == 0x02U){
+      flagTIM = 0x0U;
+      //Set 10 us TRIGGER
+      osDelay(2000U); //Wait 2s for pulse
+      Init_HCSR04 ();
+    }
     
     //Measure done
-//    osThreadFlagsWait(WATER_LEVEL, osFlagsWaitAny, osWaitForever);
-//    distance = cm;
+    flagWTR = osThreadFlagsWait(WATER_LEVEL, osFlagsWaitAny, osWaitForever);
     
-    osThreadYield();                            // suspend thread
+    if(flagWTR == 0x01U){
+      flagWTR = 0x0U;
+      distance = cm;
+    }
+    
+    
+    //osThreadYield();                            // suspend thread
   }
 }
 
 void Init_HCSR04 (void){
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
+//  osDelay(10);
+//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
 }
 
 void TimDist_Callback (void){
   osThreadFlagsSet(tid_Thread, TIMER_EVENT_FLAG);
   timer_2s += 1;
+  printf("Timer 10 segundos");
 }
