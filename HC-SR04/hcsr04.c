@@ -21,7 +21,6 @@
   
 #include "hcsr04.h"
 
-TIM_HandleTypeDef htim7;
 TIM_HandleTypeDef htim4;
 
 /* ****************************************************************************************
@@ -46,20 +45,7 @@ void TriggerPulse_Init (void){
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
   
-  /*TIM7 Configuration to 10 us in IT MODE*/
-  __HAL_RCC_TIM7_CLK_ENABLE();
-  
-  htim7.Instance = TIM7;
-  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim7.Init.Prescaler = 83;
-  htim7.Init.Period = 9;
-  htim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  HAL_TIM_Base_Init(&htim7);
-  
-  HAL_NVIC_EnableIRQ(TIM7_IRQn);
-  
   printf("Inicializacion TRIGGER");
-  
 }
 
 /* ****************************************************************************************
@@ -75,7 +61,6 @@ void TriggerPulse_Init (void){
 void EchoPulse_Init (void){
   
   GPIO_InitTypeDef GPIO_InitStruct;
-  TIM_IC_InitTypeDef sConfigIC;
   
   /*Echo Pulse Initialization */
   /*This pin will receive the bounced wavelength */
@@ -89,6 +74,13 @@ void EchoPulse_Init (void){
   
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
   
+  printf("Inicializacion ECHO");
+}
+
+void IC_TIM4_Initialization (void){
+  
+  TIM_IC_InitTypeDef sConfigIC;
+  
   /* TIM4 Configuration as IC */
   htim4.Instance = TIM4;
   htim4.Init.Prescaler = 83;
@@ -97,14 +89,18 @@ void EchoPulse_Init (void){
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   
   HAL_TIM_IC_Init(&htim4);
-  HAL_NVIC_EnableIRQ(TIM4_IRQn);
   
   sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_BOTHEDGE;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
   sConfigIC.ICFilter = 0xF;
   HAL_TIM_IC_ConfigChannel(&htim4, &sConfigIC, TIM_CHANNEL_1);
-  HAL_TIM_IC_Start_IT(&htim4, TIM_CHANNEL_1);
   
-  printf("Inicializacion ECHO");
+  HAL_TIM_IC_Start(&htim4, TIM_CHANNEL_1);
+  HAL_NVIC_EnableIRQ(TIM4_IRQn);
+  
+}
+
+void Measure_Moment (void){
+  HAL_TIM_IC_Start_IT(&htim4, TIM_CHANNEL_1);
 }

@@ -179,11 +179,10 @@ void SysTick_Handler(void)
 /******************************************************************************/
 static uint32_t val1 = 0; static uint32_t val2 = 0;
 static uint8_t first_measure = 0;
-uint8_t cm = 0;
-extern uint8_t cm;
-uint8_t tim7_cnt = 0;
+float cm = 0;
+extern float cm;
+uint8_t tim4_cnt = 0;
 
-extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim4;
 
 /**
@@ -195,27 +194,17 @@ void TIM4_IRQHandler (void){
   HAL_TIM_IRQHandler(&htim4);
 }
 
-void TIM7_IRQHandler (void){
-  HAL_TIM_IRQHandler(&htim7);
-}
-
-//En cuanto entre, significa que han pasado 10 us de TRIGGER
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-  if(htim->Instance == TIM7){
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
-    tim7_cnt += 1;
-    HAL_TIM_Base_Stop_IT(&htim7);
-  }
-}
-
 //Gestion del timer IC 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
   if(htim->Instance == TIM4){
+    tim4_cnt += 1;
     if(first_measure==0){
       val1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+      __HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_RISING);
       first_measure = 1;
     }else{
       val2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+      __HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_FALLING);
       uint32_t us = 0;
       if (val2 > val1){
         us = val2 - val1;
