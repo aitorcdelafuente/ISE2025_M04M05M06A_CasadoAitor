@@ -31,6 +31,8 @@ typedef enum {
 #define MFRC522_MAX_LEN 16
 
 #define READID 0x01
+#define NUM_VALID_CARDS 2
+#define CARD_ID_SIZE    4
 
 /* MFRC522 Data commands for CommandReg*/
 #define PCD_IDLE        0x00  //NO action; Cancel the current command

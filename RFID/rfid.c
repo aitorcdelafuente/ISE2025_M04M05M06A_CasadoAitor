@@ -41,11 +41,17 @@ static void TM_MFRC522_CalculateCRC (uint8_t* pInData, uint8_t len, uint8_t* pOu
 static void TM_MFRC522_Hiber (void);
 static TM_MFRC522_Status TM_MFRC522_Check (uint8_t* id);
 static TM_MFRC522_Status TM_MFRC522_ToCard(uint8_t cmd, uint8_t* txData, uint8_t txLen, uint8_t* backData, uint16_t* backLen);
+bool AuthID (uint8_t* id);
 static void initMBED_leds (void);
 
 extern osThreadId_t tid_speaker;                        // thread id
 
-uint8_t id[5];
+uint8_t id[4] = {0};
+const uint8_t valid_cards[NUM_VALID_CARDS][CARD_ID_SIZE] = {
+  {0x64, 0xFF, 0xFF, 0x03},
+  {0xE3, 0xB8, 0xB0, 0x14}
+};
+bool compare = false;
 
 /**
   * @brief Initialize and configure the SPI bus
@@ -78,12 +84,20 @@ static void Th_RFID (void *argument){
     if(rfidFlags == READID){ /* From timer */
       status = TM_MFRC522_Check(cardID);
       if(status == MI_OK){
+        memcpy(id, cardID, CARD_ID_SIZE);
+        printf("Tarjeta detectada con ID: %02X:%02X:%02X:%02X\n", cardID[0], cardID[1], cardID[2], cardID[3]);
         //Do a specific sound and turn on green led
-        memcpy(id, cardID, 5);
-        osThreadFlagsSet(tid_speaker, SPK_ON);
-        printf("Tarjeta detectada con ID: %s.\n", id);
-        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET); //Green
-        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET); //Red
+        compare = AuthID(id);
+        if(compare){
+          osThreadFlagsSet(tid_speaker, SPK_ON);
+          HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET); //Green
+          HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);   //Red
+        }else{
+          printf("Tarjeta erronea.\n");
+          HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);   //Green
+          HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_RESET); //Red
+        }
+        
       }else if(status == MI_ERR){
         //Do a specific sound and turn on red led
 //        osThreadFlagsSet(tid_speaker, SPK_OFF);
@@ -522,6 +536,15 @@ static TM_MFRC522_Status TM_MFRC522_ToCard(uint8_t cmd, uint8_t* txData, uint8_t
   }
   
   return status;
+}
+
+bool AuthID (uint8_t* id){
+  for(int i = 0; i < NUM_VALID_CARDS; i++){
+    if(memcmp(id, valid_cards[i], CARD_ID_SIZE) == 0){
+      return true;
+    }
+  }
+  return false;
 }
 
 static void initMBED_leds (void){
