@@ -177,47 +177,12 @@ void SysTick_Handler(void)
 /*  available peripheral interrupt handler's name please refer to the startup */
 /*  file (startup_stm32f4xx.s).                                               */
 /******************************************************************************/
-static uint32_t val1 = 0; static uint32_t val2 = 0;
-static uint8_t first_measure = 0;
-float cm = 0;
-extern float cm;
-uint8_t tim4_cnt = 0;
-
-extern TIM_HandleTypeDef htim4;
 
 /**
   * @brief  This function handles PPP interrupt request.
   * @param  None
   * @retval None
   */
-void TIM4_IRQHandler (void){
-  HAL_TIM_IRQHandler(&htim4);
-}
-
-//Gestion del timer IC 
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
-  if(htim->Instance == TIM4){
-    tim4_cnt += 1;
-    if(first_measure==0){
-      val1 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-      __HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_RISING);
-      first_measure = 1;
-    }else{
-      val2 = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-      __HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_FALLING);
-      uint32_t us = 0;
-      if (val2 > val1){
-        us = val2 - val1;
-      }else if(val1 > val2){
-        us = (0xffff - val1) + val2;
-      }
-      __HAL_TIM_SET_COUNTER(htim, 0);
-      first_measure = 0;
-      cm = (uint8_t)(us/58); //Datasheet function to obtain distance
-      osThreadFlagsSet(tid_Thread, WATER_LEVEL);
-    }
-  }
-}
 
 /**
   * @}

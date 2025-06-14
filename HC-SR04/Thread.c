@@ -21,20 +21,18 @@
  *---------------------------------------------------------------------------*/
  
 osThreadId_t tid_Thread;                        // thread id
+extern TIM_HandleTypeDef htim4;
 
-osTimerId_t tid_timDist;
-osStatus_t status;
-uint32_t exec = 2U;
+/* Cambiar dependiendo de la altura del depósito */
+#define ALTURA_DEPO_CM 11.8f 
 
-float distance = 0.0;
-extern float cm; //From Callback
+float quantity = 0.0;
 void Thread (void *argument);                   // thread function
 void Init_HCSR04 (void);
-void DWT_Delay_Init(void);
-void DWT_Delay_us(uint32_t us);
-static void TimDist_Callback (void);
+void delay(uint32_t n_microsegundos);
+float getMeasure (void);
 
-uint8_t timer_2s = 0;
+TIM_HandleTypeDef tim7;
  
 int Init_Thread (void) {
  
@@ -42,70 +40,42 @@ int Init_Thread (void) {
   if (tid_Thread == NULL) {
     return(-1);
   }
-  
-  /*We will use his timer to do a measure every 10 seconds.*/
-  tid_timDist = osTimerNew((osTimerFunc_t)&TimDist_Callback, osTimerPeriodic, &exec, NULL);
-  if (tid_timDist != NULL) {
-    if(status != osOK)
-      return -1;
-  }
  
   return(0);
 }
  
 void Thread (void *argument) {
- 
-  osTimerStart(tid_timDist, 10000U);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
-  TriggerPulse_Init();
-  EchoPulse_Init ();
+  
+  GPIO_HCSR04 ();
   IC_TIM4_Initialization ();
-  uint32_t flagWTR = 0x00000000;
-  uint32_t flagTIM = 0x00000000;
-  printf("Se crea el hilo");
+  initMBED_leds ();
   
   while (1) {
     // Insert thread code here...
-    
-    //Every ten seconds does a measure
-    flagTIM = osThreadFlagsWait(TIMER_EVENT_FLAG, osFlagsWaitAny, osWaitForever);
-    
-    if(flagTIM == 0x02U){
-      flagTIM = 0x0U;
-      //Set 10 us TRIGGER
-      Init_HCSR04 ();
-      Measure_Moment ();
+    quantity = getMeasure();
+    if (quantity >= 0.0f){
+      ledsON(quantity);
+      printf("Nivel de agua en el tanque: %.1f%%\n", quantity);
+    }else{
+      printf("Error en la medida\n");
     }
     
-    //Measure done
-    flagWTR = osThreadFlagsWait(WATER_LEVEL, osFlagsWaitAny, osWaitForever);
-
-    if(flagWTR == 0x01U){
-      flagWTR = 0x0U;
-      distance = cm;
-    }
-    
+    osDelay(10000);
     
     //osThreadYield();                            // suspend thread
   }
-}
-
-void TimDist_Callback (void){
-  osThreadFlagsSet(tid_Thread, TIMER_EVENT_FLAG);
-  timer_2s += 1;
-  printf("Timer 10 segundos");
 }
 
 /*Here we will generate the Trigger pulse every time
   we want to do a measure. This pulse has to be, at least,
   10 us long. Less than that time we won't get a
   response from the sensor.*/
-void Init_HCSR04 (void){
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
-  DWT_Delay_us (2); //Wait for 2 us
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
-  DWT_Delay_us (10); //Wait for 10 us
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
+void Init_HCSR04(void) {
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);  // TRIG LOW
+    delay(2);  // Espera breve antes de enviar pulso
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);    // TRIG HIGH
+    delay(10);  // Pulso de 10 µs
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);  // TRIG LOW
 }
 
 /*This both functions are unique from this module. They are designed to
@@ -115,17 +85,63 @@ void Init_HCSR04 (void){
   to introduce decimal numbers as arguments.*/
 
 /*Initializes the DWT cycle counter to measure delays based on CPU cycles.*/
-void DWT_Delay_Init(void) {
-    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk; //Enable DWT access setting bit TRCENA in register DEMCR
-    DWT->CYCCNT = 0;  // Resets the cycle counter (CYCCNT) of the DWT to zero
-    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk; // Enable the cycle counter (CYCCNT) to start counting
+void delay(uint32_t n_microsegundos) {
+    __HAL_RCC_TIM7_CLK_ENABLE();
+
+    tim7.Instance = TIM7;
+    tim7.Init.Prescaler = 83;                 // 84 MHz / (83+1) = 1 MHz ? 1 µs por cuenta
+    tim7.Init.Period = n_microsegundos - 1;
+    tim7.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    tim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+
+    HAL_TIM_Base_Init(&tim7);
+    HAL_TIM_Base_Start(&tim7);
+
+    while (__HAL_TIM_GET_COUNTER(&tim7) < (n_microsegundos - 1));
+
+    HAL_TIM_Base_Stop(&tim7);
+    HAL_TIM_Base_DeInit(&tim7);
 }
 
-/*It generates a delay in microseconds (µs) with high precision.*/
-void DWT_Delay_us(uint32_t us) {
-    uint32_t start = DWT->CYCCNT; //Saves the current value of the cycle counter (CYCCNT) as the starting point.
-    uint32_t ticks = (HAL_RCC_GetHCLKFreq() / 1000000) * us; // Calculates the number of CPU cycles required for the desired delay
-    while ((DWT->CYCCNT - start) < ticks); // Wait in a loop until the cycle counter (CYCCNT) has incremented the calculated amount (ticks).
+float getMeasure(void) {
+    uint32_t start = 0, end = 0, timeout = 30000;
+    uint32_t counter = 0;
+    float width = 0.0f, distance = 0.0f, waterLevel = 0.0f;
+
+    __HAL_TIM_SET_COUNTER(&htim4, 0);
+    HAL_TIM_Base_Start(&htim4);
+
+    Init_HCSR04();  // Generar pulso
+
+    // Esperar flanco de subida en ECHO
+    while (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6) == GPIO_PIN_RESET) {
+        counter = __HAL_TIM_GET_COUNTER(&htim4);
+        if (counter > timeout) {
+            HAL_TIM_Base_Stop(&htim4);
+            return -1.0f;  // Timeout esperando HIGH
+        }
+    }
+
+    start = __HAL_TIM_GET_COUNTER(&htim4);
+
+    // Esperar flanco de bajada
+    while (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6) == GPIO_PIN_SET) {
+        counter = __HAL_TIM_GET_COUNTER(&htim4);
+        if (counter - start > timeout) {
+            HAL_TIM_Base_Stop(&htim4);
+            return -1.0f;  // Timeout esperando LOW
+        }
+    }
+
+    end = __HAL_TIM_GET_COUNTER(&htim4);
+    HAL_TIM_Base_Stop(&htim4);
+
+    // Calcular duración
+    width = (end >= start) ? (end - start) : (0xFFFF - start + end);
+    distance = width / 58.0f;
+    waterLevel = ALTURA_DEPO_CM - distance;
+
+    if (waterLevel < 0.0f) return 0.0f;
+    else if (waterLevel > ALTURA_DEPO_CM) return 100.0f;
+    else return (waterLevel / ALTURA_DEPO_CM) * 100.0f;
 }
-
-

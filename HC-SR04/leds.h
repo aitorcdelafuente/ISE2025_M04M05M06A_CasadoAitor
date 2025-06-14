@@ -1,17 +1,14 @@
-#ifndef __THREAD_H
-#define __THREAD_H
+#ifndef __LEDS_H
+#define __LEDS_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "cmsis_os2.h"                          // CMSIS RTOS header file
-#include "hcsr04.h"
-#include "leds.h"
-#include "stdio.h"
+#include "stm32f4xx_hal.h"
 
 /* Exported types ------------------------------------------------------------*/
-extern osThreadId_t tid_Thread;                 // extern thread id
 /* Exported constants --------------------------------------------------------*/
-#define TIMER_EVENT_FLAG 0x01U
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-int Init_Thread (void);
-#endif /* __THREAD_H */
+void initMBED_leds (void);
+void ledsON (float percentage);
+
+#endif /* __LEDS_H */

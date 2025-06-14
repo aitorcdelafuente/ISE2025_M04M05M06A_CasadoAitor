@@ -30,4 +30,4 @@
   C:\Users\mrtor\AppData\Local\Arm\Packs\Keil\STM32F4xx_DFP\2.15.0\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_hal_tim_ex.h \
   Thread.h \
   C:\Users\mrtor\AppData\Local\Arm\Packs\ARM\CMSIS\5.8.0\CMSIS\RTOS2\Include\cmsis_os2.h \
-  hcsr04.h C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h
+  hcsr04.h leds.h C:\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h

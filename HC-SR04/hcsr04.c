@@ -22,31 +22,7 @@
 #include "hcsr04.h"
 
 TIM_HandleTypeDef htim4;
-
-/* ****************************************************************************************
-   * TRIGGER: we will use the PB2 pin to generate a 10 us HIGH level pulse using an IT    *
-   * from TIM7, configurated with to generate a 10 us pulse.                              *
-   **************************************************************************************** */
-void TriggerPulse_Init (void){
-  
-  GPIO_InitTypeDef GPIO_InitStruct;
-  
-  /* Trigger Pulse Initialization */
-  /* This pin will go HIGH level for at least 10 us */
-  
-  /* PB2 Configuration */
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-  
-  GPIO_InitStruct.Pin = GPIO_PIN_2;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
-  
-  printf("Inicializacion TRIGGER");
-}
+extern TIM_HandleTypeDef htim4;
 
 /* ****************************************************************************************
    * ECHO: this pin will be used as an Input Capture TIMER in order to could receive the  *
@@ -56,25 +32,36 @@ void TriggerPulse_Init (void){
    * timer can reach because it is a 16 bit timer. This gives a measuring window util     *
    * 65.535 us, enough to measure objects from 11 metres from the sensor. The IC timer    *
    * is configured to capture both edges of the wave (up & down) using the maximum        *
-   * digital filter we can afford.
+   * digital filter we can afford.                                                        *
+   * TRIGGER: we will use the PB2 pin to generate a 10 us HIGH level pulse using an IT    *
+   * from TIM7, configurated with to generate a 10 us pulse.                              *
    **************************************************************************************** */
-void EchoPulse_Init (void){
+void GPIO_HCSR04 (void){
   
-  GPIO_InitTypeDef GPIO_InitStruct;
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  
+  /* Trigger Pulse Initialization */
+  /* This pin will go HIGH level for at least 10 us */
+  
+  /* PB2 Configuration */
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  
+  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
   
   /*Echo Pulse Initialization */
   /*This pin will receive the bounced wavelength */
   
   /* PB6 Configuration as AF */
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  
   GPIO_InitStruct.Pin = GPIO_PIN_6;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
-  
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-  
-  printf("Inicializacion ECHO");
 }
 
 void IC_TIM4_Initialization (void){
@@ -82,25 +69,21 @@ void IC_TIM4_Initialization (void){
   TIM_IC_InitTypeDef sConfigIC;
   
   /* TIM4 Configuration as IC */
+  __HAL_RCC_TIM4_CLK_ENABLE();
+  
   htim4.Instance = TIM4;
   htim4.Init.Prescaler = 83;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 65535;
+  htim4.Init.Period = 0xFFFF;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   
   HAL_TIM_IC_Init(&htim4);
   
-  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_BOTHEDGE;
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
-  sConfigIC.ICFilter = 0xF;
+  sConfigIC.ICFilter = 0x0;
+  
   HAL_TIM_IC_ConfigChannel(&htim4, &sConfigIC, TIM_CHANNEL_1);
-  
   HAL_TIM_IC_Start(&htim4, TIM_CHANNEL_1);
-  HAL_NVIC_EnableIRQ(TIM4_IRQn);
-  
-}
-
-void Measure_Moment (void){
-  HAL_TIM_IC_Start_IT(&htim4, TIM_CHANNEL_1);
 }
